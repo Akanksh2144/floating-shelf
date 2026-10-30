@@ -1,6 +1,6 @@
 use crate::export_cache::materialize_export;
 use crate::state::{AppState, ItemStatus};
-use drag::{DragItem, Image, start_drag};
+use drag::{DragItem, DragMode, DragResult, Image, Options, start_drag};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, State, WebviewWindow};
@@ -69,19 +69,18 @@ pub async fn start_outbound_drag(
         DragItem::Files(paths),
         preview,
         |result, _cursor_position| {
+            // Copy-out contract: never remove shelf items on drop.
             let mapped = match result {
-                Ok(mode) => {
-                    // DragMode::Copy is expected; Move would violate contract.
-                    let _ = mode;
-                    Ok(())
-                }
-                Err(e) => Err(format!("drag failed: {e}")),
+                DragResult::Dropped | DragResult::Cancel => Ok(()),
             };
             if let Ok(mut slot) = result_slot.lock() {
                 *slot = Some(mapped);
             }
         },
-        Default::default(),
+        Options {
+            mode: DragMode::Copy,
+            ..Default::default()
+        },
     )
     .map_err(|e| format!("start_drag: {e}"))?;
 
