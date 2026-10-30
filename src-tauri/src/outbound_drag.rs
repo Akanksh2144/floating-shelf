@@ -2,7 +2,6 @@ use crate::export_cache::materialize_export;
 use crate::state::{AppState, ItemStatus};
 use drag::{DragItem, DragMode, DragResult, Image, Options, start_drag};
 use std::path::PathBuf;
-use std::sync::Mutex;
 use tauri::{AppHandle, State, WebviewWindow};
 
 /// Start a native OS drag using immutable export-cache copies (Copy mode).
@@ -62,19 +61,15 @@ pub async fn start_outbound_drag(
         0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
     ]);
 
-    let result_slot: Mutex<Option<Result<(), String>>> = Mutex::new(None);
-
     start_drag(
         &window,
         DragItem::Files(paths),
         preview,
-        |result, _cursor_position| {
-            // Copy-out contract: never remove shelf items on drop.
-            let mapped = match result {
-                DragResult::Dropped | DragResult::Cancel => Ok(()),
-            };
-            if let Ok(mut slot) = result_slot.lock() {
-                *slot = Some(mapped);
+        move |result, _cursor_position| {
+            // Copy-out contract: never remove shelf items on drop (§5.1).
+            match result {
+                DragResult::Dropped => eprintln!("outbound drag dropped (copy)"),
+                DragResult::Cancel => eprintln!("outbound drag canceled"),
             }
         },
         Options {
