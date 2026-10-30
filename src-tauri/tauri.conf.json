@@ -15,10 +15,10 @@
       {
         "label": "shelf",
         "title": "Floating Shelf",
-        "width": 280,
-        "height": 360,
-        "minWidth": 240,
-        "minHeight": 280,
+        "width": 340,
+        "height": 460,
+        "minWidth": 300,
+        "minHeight": 320,
         "resizable": true,
         "decorations": false,
         "transparent": true,
@@ -30,7 +30,11 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$APPDATA/**", "$APPLOCALDATA/**", "$TEMP/**"]
+      }
     }
   },
   "bundle": {
