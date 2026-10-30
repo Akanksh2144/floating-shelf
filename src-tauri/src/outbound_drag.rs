@@ -24,7 +24,8 @@ pub async fn start_outbound_drag(
         .clone()
         .ok_or_else(|| "data root not initialized".to_string())?;
 
-    let paths: Vec<PathBuf> = {
+    // Collect under the mutex, then drop the guard before any `.await`.
+    let collected = {
         let shelves = state.shelves.lock().map_err(|e| e.to_string())?;
         let shelf = shelves
             .get(&shelf_id)
@@ -42,15 +43,14 @@ pub async fn start_outbound_drag(
             }
             collected.push(item.clone());
         }
-        drop(shelves);
-
-        let mut out = Vec::new();
-        for item in collected {
-            let (path, _) = materialize_export(&root, &item).await?;
-            out.push(path);
-        }
-        out
+        collected
     };
+
+    let mut paths = Vec::with_capacity(collected.len());
+    for item in collected {
+        let (path, _) = materialize_export(&root, &item).await?;
+        paths.push(path);
+    }
 
     // Tiny 1x1 PNG placeholder drag preview (polish later).
     let preview = Image::Raw(vec![
