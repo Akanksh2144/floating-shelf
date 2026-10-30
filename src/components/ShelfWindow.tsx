@@ -247,7 +247,7 @@ export default function ShelfWindow() {
   const hasItems = Boolean(shelf && shelf.items.length > 0);
 
   return (
-    <div className="flex h-full w-full p-3">
+    <div className="flex h-full w-full">
       <div
         className={`flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-[var(--shelf-border)] bg-[var(--shelf-bg)] shadow-[0_18px_50px_rgba(15,23,42,0.22)] ${
           draggingOver ? "ring-2 ring-blue-500" : ""
