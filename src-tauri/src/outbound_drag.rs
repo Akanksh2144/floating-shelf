@@ -68,7 +68,7 @@ pub async fn start_outbound_drag(
         &window,
         DragItem::Files(paths),
         preview,
-        |result| {
+        |result, _cursor_position| {
             let mapped = match result {
                 Ok(mode) => {
                     // DragMode::Copy is expected; Move would violate contract.
