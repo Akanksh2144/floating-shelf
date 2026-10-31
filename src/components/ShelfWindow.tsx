@@ -27,10 +27,10 @@ import { ISLAND, morphIslandWindow } from "../lib/island";
 const IDLE_MS = 10_000;
 
 const easeOut = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.8 };
-const fadeUp = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -6 },
+const fadeSwap = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
 };
 
 function formatBytes(n: number): string {
@@ -153,10 +153,12 @@ function ItemTile({
         </motion.button>
       </div>
 
-      <div className="mt-1.5 truncate px-0.5 text-[12px] font-medium text-slate-900">
+      <div className="mt-1.5 truncate px-0.5 text-[12px] font-medium leading-4 text-slate-900">
         {item.name}
       </div>
-      <div className={`truncate px-0.5 text-[11px] ${failed ? "text-red-600" : "text-slate-500"}`}>
+      <div
+        className={`truncate px-0.5 text-[11px] leading-4 ${failed ? "text-red-600" : "text-slate-500"}`}
+      >
         {failed ? (item.error ?? "Copy failed") : `${ext} · ${formatBytes(item.sizeBytes)}`}
       </div>
     </motion.div>
@@ -364,7 +366,7 @@ export default function ShelfWindow() {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`flex h-[52px] shrink-0 cursor-pointer items-center gap-2.5 px-3.5 ${
+        className={`flex min-h-[52px] shrink-0 cursor-pointer items-center gap-2.5 px-3.5 py-2 ${
           draggingOver && !expanded ? "bg-blue-50" : "bg-white"
         }`}
         onClick={() => {
@@ -383,19 +385,19 @@ export default function ShelfWindow() {
           M
         </motion.span>
 
-        <div className="relative min-h-[28px] min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-visible">
           <AnimatePresence mode="wait" initial={false}>
             {expanded ? (
               <motion.div
                 key="expanded-title"
-                {...fadeUp}
-                transition={easeOut}
-                className="absolute inset-0 flex flex-col justify-center"
+                {...fadeSwap}
+                transition={{ duration: 0.15 }}
+                className="flex flex-col justify-center gap-0.5"
               >
-                <div className="truncate text-[14px] font-semibold tracking-tight text-slate-900">
+                <div className="truncate leading-5 text-[14px] font-semibold tracking-tight text-slate-900">
                   Modillion
                 </div>
-                <div className="truncate text-[11px] text-slate-500">
+                <div className="truncate leading-4 text-[11px] text-slate-500">
                   {totals.count === 0
                     ? "Drop files in. Originals stay put."
                     : `${totals.count} file${totals.count === 1 ? "" : "s"} · ${formatBytes(totals.bytes)} · drag out to copy`}
@@ -404,11 +406,11 @@ export default function ShelfWindow() {
             ) : (
               <motion.div
                 key="pill-title"
-                {...fadeUp}
-                transition={easeOut}
-                className="absolute inset-0 flex items-center"
+                {...fadeSwap}
+                transition={{ duration: 0.15 }}
+                className="flex items-center"
               >
-                <span className="truncate text-[13px] font-semibold tracking-tight text-slate-900">
+                <span className="truncate leading-5 text-[13px] font-semibold tracking-tight text-slate-900">
                   {draggingOver ? "Release to copy" : pillLabel}
                 </span>
               </motion.div>
