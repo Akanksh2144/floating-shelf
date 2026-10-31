@@ -1,8 +1,8 @@
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWindow};
 
-/// Vertical edge bar — wide enough to hit with Explorer drag-drop.
-pub const COLLAPSED_W: f64 = 20.0;
-pub const COLLAPSED_H: f64 = 96.0;
+/// Vertical edge bar — sized for reliable Explorer drag hit-testing.
+pub const COLLAPSED_W: f64 = 28.0;
+pub const COLLAPSED_H: f64 = 120.0;
 pub const EXPANDED_W: f64 = 340.0;
 pub const EXPANDED_H: f64 = 460.0;
 pub const EDGE_INSET: f64 = 6.0;
@@ -13,7 +13,6 @@ fn shelf_window(app: &AppHandle) -> Result<WebviewWindow, String> {
 }
 
 /// Dock the island to the right edge of the monitor, vertically centered.
-/// Expand/collapse grows inward from this edge (x stays right-aligned).
 pub fn dock_right_edge(win: &WebviewWindow, width: f64, height: f64) -> Result<(), String> {
     let monitor = win
         .current_monitor()
@@ -40,8 +39,9 @@ pub fn dock_right_edge(win: &WebviewWindow, width: f64, height: f64) -> Result<(
     Ok(())
 }
 
-/// Resize/reposition the island (used for Motion-driven morph frames).
-/// When `restyle` is false, skip SetWindowRgn/DWM — mid-morph restyles break OLE drag-drop.
+/// Resize/reposition the island.
+/// `restyle: false` skips DWM chrome refresh but still clears any HWND region
+/// so OLE drag-drop hit-testing matches the live window size.
 #[tauri::command]
 pub fn set_island_bounds(
     app: AppHandle,
@@ -53,10 +53,16 @@ pub fn set_island_bounds(
     let w = width.clamp(8.0, EXPANDED_W + 40.0);
     let h = height.clamp(40.0, EXPANDED_H + 40.0);
     let _ = win.set_resizable(false);
+
+    // Drop any stale region *before* resize so the new client area is hittable.
+    let _ = crate::window_ext::clear_window_region(&win);
+
     dock_right_edge(&win, w, h)?;
     let _ = win.show();
     if restyle.unwrap_or(true) {
         let _ = crate::window_ext::apply_shelf_window_styles(&win);
+    } else {
+        let _ = crate::window_ext::clear_window_region(&win);
     }
     Ok(())
 }

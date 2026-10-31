@@ -15,8 +15,8 @@
       {
         "label": "shelf",
         "title": "Modillion",
-        "width": 20,
-        "height": 96,
+        "width": 28,
+        "height": 120,
         "minWidth": 8,
         "minHeight": 40,
         "resizable": false,
@@ -26,7 +26,8 @@
         "skipTaskbar": true,
         "visible": true,
         "shadow": false,
-        "focus": false
+        "focus": false,
+        "dragDropEnabled": true
       }
     ],
     "security": {

@@ -358,17 +358,12 @@ export default function ShelfWindow() {
   // Collapsed: thin vertical edge bar only (no labels — they won't fit).
   if (!expanded) {
     return (
-      <motion.button
+      <button
         type="button"
         aria-label="Expand Modillion"
-        className={`h-full w-full cursor-pointer border border-black/10 outline-none ${
+        className={`h-full w-full cursor-pointer rounded-full border border-black/10 outline-none ${
           draggingOver ? "bg-blue-100" : "bg-white"
         }`}
-        initial={false}
-        animate={{ backgroundColor: draggingOver ? "rgb(219 234 254)" : "rgb(255 255 255)" }}
-        whileHover={{ backgroundColor: draggingOver ? "rgb(191 219 254)" : "rgb(248 250 252)" }}
-        whileTap={{ scaleY: 0.96 }}
-        transition={{ duration: 0.15 }}
         onClick={() => void expand()}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -378,7 +373,7 @@ export default function ShelfWindow() {
 
   return (
     <div
-      className="flex h-full w-full flex-col overflow-hidden bg-white"
+      className="flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-black/10 bg-white"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

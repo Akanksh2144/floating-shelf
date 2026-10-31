@@ -2,7 +2,7 @@ import { animate } from "motion/react";
 import { setIslandBounds } from "./tauri-api";
 
 export const ISLAND = {
-  collapsed: { w: 20, h: 96 },
+  collapsed: { w: 28, h: 120 },
   expanded: { w: 340, h: 460 },
 } as const;
 
