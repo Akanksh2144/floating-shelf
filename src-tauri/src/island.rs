@@ -5,7 +5,7 @@ pub const COLLAPSED_W: f64 = 28.0;
 pub const COLLAPSED_H: f64 = 120.0;
 pub const EXPANDED_W: f64 = 340.0;
 pub const EXPANDED_H: f64 = 460.0;
-pub const EDGE_INSET: f64 = 6.0;
+pub const EDGE_INSET: f64 = 0.0;
 
 fn shelf_window(app: &AppHandle) -> Result<WebviewWindow, String> {
     app.get_webview_window("shelf")

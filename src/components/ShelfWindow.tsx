@@ -360,7 +360,7 @@ export default function ShelfWindow() {
       <button
         type="button"
         aria-label="Expand Modillion"
-        className={`h-full w-full cursor-pointer rounded-full border border-black/10 outline-none ${
+        className={`box-border h-full w-full cursor-pointer rounded-full border border-[var(--shelf-border)] outline-none ${
           draggingOver ? "bg-blue-100" : "bg-white"
         }`}
         onClick={() => void expand()}
@@ -372,7 +372,7 @@ export default function ShelfWindow() {
 
   return (
     <div
-      className="flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-black/10 bg-white"
+      className="box-border flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-[var(--shelf-border)] bg-white"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

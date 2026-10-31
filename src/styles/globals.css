@@ -2,7 +2,7 @@
 
 :root {
   --shelf-bg: #ffffff;
-  --shelf-border: rgba(15, 23, 42, 0.08);
+  --shelf-border: rgba(15, 23, 42, 0.1);
   --shelf-muted: #64748b;
   --shelf-text: #0f172a;
   --shelf-accent: #2563eb;
@@ -18,8 +18,8 @@ body,
   padding: 0;
   width: 100%;
   height: 100%;
-  /* Opaque fill — shape comes from the HWND region clip, not CSS transparency. */
-  background: #ffffff;
+  /* Transparent so only the rounded surface paints — HWND corners stay invisible. */
+  background: transparent !important;
   overflow: hidden;
   border: none;
   outline: none;

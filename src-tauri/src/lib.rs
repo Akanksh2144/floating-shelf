@@ -209,7 +209,7 @@ pub fn run() {
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
-                .transparent(false)
+                .transparent(true)
                 .build()?;
                 let _ = apply_shelf_window_styles(&win);
                 let _ = island::dock_right_edge(
