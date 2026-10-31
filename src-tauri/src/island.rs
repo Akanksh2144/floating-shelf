@@ -1,8 +1,8 @@
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWindow};
 
-/// Thin vertical edge bar (Cursor-style handle).
-pub const COLLAPSED_W: f64 = 10.0;
-pub const COLLAPSED_H: f64 = 72.0;
+/// Vertical edge bar — wide enough to hit with Explorer drag-drop.
+pub const COLLAPSED_W: f64 = 20.0;
+pub const COLLAPSED_H: f64 = 96.0;
 pub const EXPANDED_W: f64 = 340.0;
 pub const EXPANDED_H: f64 = 460.0;
 pub const EDGE_INSET: f64 = 6.0;
@@ -41,15 +41,23 @@ pub fn dock_right_edge(win: &WebviewWindow, width: f64, height: f64) -> Result<(
 }
 
 /// Resize/reposition the island (used for Motion-driven morph frames).
+/// When `restyle` is false, skip SetWindowRgn/DWM — mid-morph restyles break OLE drag-drop.
 #[tauri::command]
-pub fn set_island_bounds(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
+pub fn set_island_bounds(
+    app: AppHandle,
+    width: f64,
+    height: f64,
+    restyle: Option<bool>,
+) -> Result<(), String> {
     let win = shelf_window(&app)?;
     let w = width.clamp(8.0, EXPANDED_W + 40.0);
     let h = height.clamp(40.0, EXPANDED_H + 40.0);
     let _ = win.set_resizable(false);
     dock_right_edge(&win, w, h)?;
     let _ = win.show();
-    let _ = crate::window_ext::apply_shelf_window_styles(&win);
+    if restyle.unwrap_or(true) {
+        let _ = crate::window_ext::apply_shelf_window_styles(&win);
+    }
     Ok(())
 }
 
@@ -60,7 +68,7 @@ pub fn set_island_expanded(app: AppHandle, expanded: bool) -> Result<(), String>
     } else {
         (COLLAPSED_W, COLLAPSED_H)
     };
-    set_island_bounds(app.clone(), w, h)?;
+    set_island_bounds(app.clone(), w, h, Some(true))?;
     let _ = app.emit("island:mode", if expanded { "expanded" } else { "collapsed" });
     Ok(())
 }

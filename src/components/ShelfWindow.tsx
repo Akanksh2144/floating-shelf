@@ -21,7 +21,7 @@ import {
   onItemProgress,
   onIslandMode,
 } from "../lib/tauri-api";
-import { ISLAND, morphIslandWindow } from "../lib/island";
+import { ISLAND, morphIslandWindow, snapIslandWindow } from "../lib/island";
 
 const IDLE_MS = 10_000;
 
@@ -192,12 +192,16 @@ export default function ShelfWindow() {
     }
   }, []);
 
-  const expand = useCallback(async () => {
+  const expand = useCallback(async (opts?: { instant?: boolean }) => {
     if (modeRef.current === "expanded" || morphingRef.current) return;
     morphingRef.current = true;
     try {
       setMode("expanded");
-      await morphIslandWindow(true, sizeRef.current);
+      if (opts?.instant) {
+        await snapIslandWindow(true);
+      } else {
+        await morphIslandWindow(true, sizeRef.current);
+      }
       sizeRef.current = ISLAND.expanded;
     } catch (e) {
       setError(String(e));
@@ -209,12 +213,13 @@ export default function ShelfWindow() {
 
   const collapse = useCallback(async () => {
     if (modeRef.current === "collapsed" || morphingRef.current) return;
+    // Never collapse while a file drag is over the shelf.
+    if (draggingOver) return;
     morphingRef.current = true;
     try {
       setDraggingOver(false);
       dragDepth.current = 0;
       setMode("collapsed");
-      // Brief beat so exit animations can start before the window shrinks hard.
       await new Promise((r) => window.setTimeout(r, 90));
       await morphIslandWindow(false, sizeRef.current);
       sizeRef.current = ISLAND.collapsed;
@@ -224,7 +229,7 @@ export default function ShelfWindow() {
     } finally {
       morphingRef.current = false;
     }
-  }, []);
+  }, [draggingOver]);
 
   useEffect(() => {
     void refresh();
@@ -295,17 +300,18 @@ export default function ShelfWindow() {
       unlistenDrop = await win.onDragDropEvent(async (event) => {
         if (event.payload.type === "enter" || event.payload.type === "over") {
           setDraggingOver(true);
+          // Snap open immediately — spring morph mid-drag drops the OLE target.
           if (modeRef.current === "collapsed") {
-            void expand();
+            void expand({ instant: true });
           }
         } else if (event.payload.type === "leave") {
           setDraggingOver(false);
         } else if (event.payload.type === "drop") {
           setDraggingOver(false);
-          if (modeRef.current === "collapsed") {
-            await expand();
-          }
           const paths = event.payload.paths;
+          if (modeRef.current === "collapsed") {
+            await expand({ instant: true });
+          }
           if (!paths.length) return;
           let current = shelfRef.current;
           if (!current) {

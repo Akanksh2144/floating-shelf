@@ -2,7 +2,7 @@ import { animate } from "motion/react";
 import { setIslandBounds } from "./tauri-api";
 
 export const ISLAND = {
-  collapsed: { w: 10, h: 72 },
+  collapsed: { w: 20, h: 96 },
   expanded: { w: 340, h: 460 },
 } as const;
 
@@ -32,9 +32,16 @@ export async function morphIslandWindow(
       if (Math.abs(w - lastW) < 0.4 && Math.abs(h - lastH) < 0.4) return;
       lastW = w;
       lastH = h;
-      void setIslandBounds(w, h);
+      // Skip restyle mid-morph — SetWindowRgn every frame kills OLE drop targets.
+      void setIslandBounds(w, h, false);
     },
   });
 
-  await setIslandBounds(end.w, end.h);
+  await setIslandBounds(end.w, end.h, true);
+}
+
+/** Instant resize for drag-enter — keeps the HWND stable under the cursor. */
+export async function snapIslandWindow(expanded: boolean): Promise<void> {
+  const end = expanded ? ISLAND.expanded : ISLAND.collapsed;
+  await setIslandBounds(end.w, end.h, true);
 }

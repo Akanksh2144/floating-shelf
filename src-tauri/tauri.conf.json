@@ -15,8 +15,8 @@
       {
         "label": "shelf",
         "title": "Modillion",
-        "width": 10,
-        "height": 72,
+        "width": 20,
+        "height": 96,
         "minWidth": 8,
         "minHeight": 40,
         "resizable": false,
