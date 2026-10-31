@@ -16,19 +16,16 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
     };
     use windows::Win32::Graphics::Gdi::SetWindowRgn;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongPtrW, ReleaseCapture, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE,
-        GWL_STYLE, HWND_TOPMOST, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-        SWP_SHOWWINDOW, WS_BORDER, WS_CAPTION, WS_DLGFRAME, WS_EX_CLIENTEDGE, WS_EX_NOACTIVATE,
-        WS_EX_STATICEDGE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_WINDOWEDGE, WS_THICKFRAME,
+        GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST,
+        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, WS_BORDER,
+        WS_CAPTION, WS_DLGFRAME, WS_EX_CLIENTEDGE, WS_EX_NOACTIVATE, WS_EX_STATICEDGE,
+        WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_WINDOWEDGE, WS_THICKFRAME,
     };
 
     let hwnd_raw = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
     let hwnd = HWND(hwnd_raw.0);
 
     unsafe {
-        // If a prior drag/window-move left capture held, release it.
-        let _ = ReleaseCapture();
-
         let mut style = GetWindowLongPtrW(hwnd, GWL_STYLE);
         style &= !(WS_CAPTION.0 as isize);
         style &= !(WS_THICKFRAME.0 as isize);
@@ -82,12 +79,10 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
 pub fn clear_window_region(window: &WebviewWindow) -> Result<(), String> {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::Graphics::Gdi::SetWindowRgn;
-    use windows::Win32::UI::WindowsAndMessaging::ReleaseCapture;
 
     let hwnd_raw = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
     let hwnd = HWND(hwnd_raw.0);
     unsafe {
-        let _ = ReleaseCapture();
         let _ = SetWindowRgn(hwnd, None, true);
     }
     Ok(())
