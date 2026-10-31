@@ -208,7 +208,7 @@ pub fn run() {
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
-                .transparent(true)
+                .transparent(false)
                 .build()?;
                 let _ = apply_shelf_window_styles(&win);
                 let _ = island::dock_top_center(

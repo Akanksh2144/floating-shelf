@@ -18,7 +18,8 @@ body,
   padding: 0;
   width: 100%;
   height: 100%;
-  background: transparent;
+  /* Opaque fill — shape comes from the HWND region clip, not CSS transparency. */
+  background: #ffffff;
   overflow: hidden;
   border: none;
   outline: none;

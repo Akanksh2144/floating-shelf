@@ -327,7 +327,7 @@ export default function ShelfWindow() {
 
   return (
     <div
-      className="h-full w-full bg-transparent"
+      className="h-full w-full bg-white"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -336,14 +336,12 @@ export default function ShelfWindow() {
           <motion.button
             key="pill"
             type="button"
-            initial={{ opacity: 0, scale: 0.92, y: -6 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ type: "spring", stiffness: 520, damping: 34 }}
-            className={`flex h-full w-full cursor-pointer items-center gap-2.5 rounded-full border px-3.5 outline-none ${
-              draggingOver
-                ? "border-blue-500 bg-blue-50"
-                : "border-black/10 bg-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+            className={`flex h-full w-full cursor-pointer items-center gap-2.5 border-0 px-3.5 outline-none ${
+              draggingOver ? "bg-blue-50" : "bg-white"
             }`}
             onClick={() => void expand()}
             onMouseDown={(e) => {
@@ -375,11 +373,11 @@ export default function ShelfWindow() {
         ) : (
           <motion.div
             key="panel"
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 420, damping: 32 }}
-            className={`flex h-full w-full flex-col overflow-hidden rounded-[22px] border border-black/8 bg-[var(--shelf-bg)] shadow-[0_16px_40px_rgba(15,23,42,0.2)] ${
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+            className={`flex h-full w-full flex-col overflow-hidden bg-[var(--shelf-bg)] ${
               draggingOver ? "ring-2 ring-inset ring-blue-500" : ""
             }`}
           >
