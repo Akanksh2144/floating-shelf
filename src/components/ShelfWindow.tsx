@@ -298,20 +298,15 @@ export default function ShelfWindow() {
 
       const win = getCurrentWindow();
       unlistenDrop = await win.onDragDropEvent(async (event) => {
+        // Never resize/move the HWND during enter/over/drop. Doing so mid
+        // DoDragDrop wedges Explorer's drag loop system-wide until we exit.
         if (event.payload.type === "enter" || event.payload.type === "over") {
           setDraggingOver(true);
-          // Snap open immediately — spring morph mid-drag drops the OLE target.
-          if (modeRef.current === "collapsed") {
-            void expand({ instant: true });
-          }
         } else if (event.payload.type === "leave") {
           setDraggingOver(false);
         } else if (event.payload.type === "drop") {
           setDraggingOver(false);
           const paths = event.payload.paths;
-          if (modeRef.current === "collapsed") {
-            await expand({ instant: true });
-          }
           if (!paths.length) return;
           let current = shelfRef.current;
           if (!current) {
@@ -326,6 +321,10 @@ export default function ShelfWindow() {
             setError(String(e));
             await refresh();
           }
+          // Expand only after OLE drop has finished.
+          window.setTimeout(() => {
+            void expand({ instant: true });
+          }, 150);
         }
       });
     })();

@@ -1,32 +1,34 @@
 use tauri::WebviewWindow;
 
-/// Apply non-activating, always-on-top, tool-window styles so dropping
-/// onto the shelf never steals focus from Explorer / other apps.
+/// Always-on-top tool window styles.
 ///
-/// Important: we do **not** use SetWindowRgn. Clipping the HWND region
-/// after resize leaves a stale hit-test capsule (often the collapsed
-/// 20×96 strip), which makes Explorer file drops miss the shelf and can
-/// make drags feel broken. Shape is handled in CSS instead.
+/// Do **not** set WS_EX_NOACTIVATE — combined with live HWND resizes during
+/// OLE drag callbacks it can leave Explorer's DoDragDrop loop wedged so
+/// file dragging fails system-wide until this process exits.
+///
+/// Do **not** use SetWindowRgn — stale regions break drop hit-testing.
 #[cfg(windows)]
 pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::Graphics::Dwm::{
-        DwmSetWindowAttribute, DWMNCRP_DISABLED, DWMWA_BORDER_COLOR, DWMWA_COLOR_NONE,
-        DWMWA_NCRENDERING_POLICY, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
-        DWM_WINDOW_CORNER_PREFERENCE,
+        DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_COLOR_NONE,
+        DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND, DWM_WINDOW_CORNER_PREFERENCE,
     };
     use windows::Win32::Graphics::Gdi::SetWindowRgn;
     use windows::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST,
-        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, WS_BORDER,
-        WS_CAPTION, WS_DLGFRAME, WS_EX_CLIENTEDGE, WS_EX_NOACTIVATE, WS_EX_STATICEDGE,
-        WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_WINDOWEDGE, WS_THICKFRAME,
+        GetWindowLongPtrW, ReleaseCapture, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE,
+        GWL_STYLE, HWND_TOPMOST, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+        SWP_SHOWWINDOW, WS_BORDER, WS_CAPTION, WS_DLGFRAME, WS_EX_CLIENTEDGE, WS_EX_NOACTIVATE,
+        WS_EX_STATICEDGE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_WINDOWEDGE, WS_THICKFRAME,
     };
 
     let hwnd_raw = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
     let hwnd = HWND(hwnd_raw.0);
 
     unsafe {
+        // If a prior drag/window-move left capture held, release it.
+        let _ = ReleaseCapture();
+
         let mut style = GetWindowLongPtrW(hwnd, GWL_STYLE);
         style &= !(WS_CAPTION.0 as isize);
         style &= !(WS_THICKFRAME.0 as isize);
@@ -38,7 +40,8 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
         ex &= !(WS_EX_CLIENTEDGE.0 as isize);
         ex &= !(WS_EX_WINDOWEDGE.0 as isize);
         ex &= !(WS_EX_STATICEDGE.0 as isize);
-        ex |= WS_EX_NOACTIVATE.0 as isize;
+        // Explicitly clear NOACTIVATE if a previous build set it.
+        ex &= !(WS_EX_NOACTIVATE.0 as isize);
         ex |= WS_EX_TOOLWINDOW.0 as isize;
         ex |= WS_EX_TOPMOST.0 as isize;
         SetWindowLongPtrW(hwnd, GWL_EXSTYLE, ex);
@@ -59,15 +62,6 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
             std::mem::size_of_val(&corner) as u32,
         );
 
-        let ncrp = DWMNCRP_DISABLED;
-        let _ = DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_NCRENDERING_POLICY,
-            &ncrp as *const _ as *const std::ffi::c_void,
-            std::mem::size_of_val(&ncrp) as u32,
-        );
-
-        // Clear any prior region so the full client area receives OLE drag-drop.
         let _ = SetWindowRgn(hwnd, None, true);
 
         let _ = SetWindowPos(
@@ -84,15 +78,16 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
     Ok(())
 }
 
-/// Clear HWND region without other style changes (safe mid-morph / before resize).
 #[cfg(windows)]
 pub fn clear_window_region(window: &WebviewWindow) -> Result<(), String> {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::Graphics::Gdi::SetWindowRgn;
+    use windows::Win32::UI::WindowsAndMessaging::ReleaseCapture;
 
     let hwnd_raw = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
     let hwnd = HWND(hwnd_raw.0);
     unsafe {
+        let _ = ReleaseCapture();
         let _ = SetWindowRgn(hwnd, None, true);
     }
     Ok(())
