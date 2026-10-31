@@ -1,4 +1,5 @@
 mod export_cache;
+mod island;
 mod outbound_drag;
 mod paths;
 mod persist;
@@ -6,6 +7,7 @@ mod staging;
 mod state;
 mod window_ext;
 
+use island::{reveal_island, set_island_expanded};
 use persist::{init_storage, restore_app_state, save_app_state};
 use staging::{persist_shelf_meta, stage_local_file};
 use state::{AppState, Shelf};
@@ -84,8 +86,6 @@ async fn stage_paths(
                 shelves.insert(shelf_id.clone(), shelf);
             }
             Err(e) => {
-                // Keep failed item in shelf for UI; already pushed inside stage_local_file on success path.
-                // On early failure before push, just log via emit already handled.
                 let mut shelves = state.shelves.lock().map_err(|e| e.to_string())?;
                 shelves.insert(shelf_id.clone(), shelf);
                 eprintln!("stage failed for {}: {e}", path.display());
@@ -131,12 +131,7 @@ fn remove_item(
 
 #[tauri::command]
 fn show_shelf_window(app: AppHandle) -> Result<(), String> {
-    if let Some(win) = app.get_webview_window("shelf") {
-        let _ = win.show();
-        let _ = apply_shelf_window_styles(&win);
-        return Ok(());
-    }
-    Ok(())
+    reveal_island(app)
 }
 
 fn ensure_active_shelf(state: &AppState, root: &std::path::PathBuf) -> Result<Shelf, String> {
@@ -178,6 +173,8 @@ pub fn run() {
             stage_paths,
             remove_item,
             show_shelf_window,
+            set_island_expanded,
+            reveal_island,
             outbound_drag::start_outbound_drag,
         ])
         .setup(|app| {
@@ -191,9 +188,13 @@ pub fn run() {
                 let _ = ensure_active_shelf(&state, &root);
             }
 
-            // Rebuild / style the shelf window defined in tauri.conf.json
             if let Some(win) = app.get_webview_window("shelf") {
                 let _ = apply_shelf_window_styles(&win);
+                let _ = island::dock_top_center(
+                    &win,
+                    island::COLLAPSED_W,
+                    island::COLLAPSED_H,
+                );
                 let _ = win.show();
             } else {
                 let win = WebviewWindowBuilder::new(
@@ -201,29 +202,41 @@ pub fn run() {
                     "shelf",
                     tauri::WebviewUrl::App("index.html".into()),
                 )
-                .title("Floating Shelf")
-                .inner_size(280.0, 360.0)
-                .resizable(true)
+                .title("Modillion")
+                .inner_size(island::COLLAPSED_W, island::COLLAPSED_H)
+                .resizable(false)
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
                 .transparent(true)
                 .build()?;
                 let _ = apply_shelf_window_styles(&win);
+                let _ = island::dock_top_center(
+                    &win,
+                    island::COLLAPSED_W,
+                    island::COLLAPSED_H,
+                );
             }
 
-            let show_i = MenuItem::with_id(app, "show", "Show Shelf", true, None::<&str>)?;
+            let reveal_i =
+                MenuItem::with_id(app, "reveal", "Reveal Island", true, None::<&str>)?;
+            let settings_i =
+                MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+            let menu = Menu::with_items(app, &[&reveal_i, &settings_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                .tooltip("Floating Shelf")
+                .tooltip("Modillion")
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => app.exit(0),
-                    "show" => {
-                        let _ = show_shelf_window(app.clone());
+                    "reveal" => {
+                        let _ = reveal_island(app.clone());
+                    }
+                    "settings" => {
+                        // Settings UI lands with licensing; tray entry is wired now.
+                        let _ = reveal_island(app.clone());
                     }
                     _ => {}
                 })
@@ -235,7 +248,7 @@ pub fn run() {
                     } = event
                     {
                         let app = tray.app_handle();
-                        let _ = show_shelf_window(app.clone());
+                        let _ = reveal_island(app.clone());
                     }
                 })
                 .build(app)?;
@@ -245,9 +258,10 @@ pub fn run() {
         .on_window_event(|window, event| {
             if window.label() == "shelf" {
                 if let WindowEvent::CloseRequested { api, .. } = event {
-                    // Hide instead of destroy — utility stays in tray.
+                    // Collapse to pill instead of destroying — utility stays alive.
                     api.prevent_close();
-                    let _ = window.hide();
+                    let app = window.app_handle().clone();
+                    let _ = set_island_expanded(app, false);
                 }
             }
         })

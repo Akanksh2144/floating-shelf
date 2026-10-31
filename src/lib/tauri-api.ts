@@ -25,8 +25,26 @@ export async function startOutboundDrag(
   return invoke("start_outbound_drag", { shelfId, itemIds });
 }
 
+export async function setIslandExpanded(expanded: boolean): Promise<void> {
+  return invoke("set_island_expanded", { expanded });
+}
+
+export async function revealIsland(): Promise<void> {
+  return invoke("reveal_island");
+}
+
 export function onItemProgress(
   handler: (event: StageProgressEvent) => void,
 ): Promise<UnlistenFn> {
   return listen<StageProgressEvent>("shelf:item-progress", (e) => handler(e.payload));
+}
+
+export function onIslandMode(
+  handler: (mode: "collapsed" | "expanded") => void,
+): Promise<UnlistenFn> {
+  return listen<string>("island:mode", (e) => {
+    if (e.payload === "expanded" || e.payload === "collapsed") {
+      handler(e.payload);
+    }
+  });
 }

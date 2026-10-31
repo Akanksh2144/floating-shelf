@@ -1124,6 +1124,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "floating-shelf"
+version = "0.1.0"
+dependencies = [
+ "base64 0.23.1",
+ "chrono",
+ "drag",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-fs",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-opener",
+ "tauri-plugin-store",
+ "thiserror 2.0.21",
+ "tokio",
+ "uuid",
+ "windows 0.62.2",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1667,6 +1691,12 @@ dependencies = [
  "http-body",
  "pin-project-lite",
 ]
+
+[[package]]
+name = "http-range"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2149c4b4b83390c71fab669730347d578ec6bdf759f2160c581ad8b8819733b4"
 
 [[package]]
 name = "httparse"
@@ -3688,6 +3718,7 @@ dependencies = [
  "gtk",
  "heck 0.5.0",
  "http",
+ "http-range",
  "jni",
  "libc",
  "log",
@@ -3719,30 +3750,6 @@ dependencies = [
  "webkit2gtk",
  "webview2-com",
  "window-vibrancy",
- "windows 0.62.2",
-]
-
-[[package]]
-name = "tauri-app"
-version = "0.1.0"
-dependencies = [
- "base64 0.23.1",
- "chrono",
- "drag",
- "hex",
- "serde",
- "serde_json",
- "sha2 0.11.1",
- "tauri",
- "tauri-build",
- "tauri-plugin-clipboard-manager",
- "tauri-plugin-fs",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-opener",
- "tauri-plugin-store",
- "thiserror 2.0.21",
- "tokio",
- "uuid",
  "windows 0.62.2",
 ]
 
