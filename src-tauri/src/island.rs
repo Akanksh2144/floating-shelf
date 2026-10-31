@@ -1,18 +1,20 @@
 use tauri::{AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewWindow};
 
-pub const COLLAPSED_W: f64 = 172.0;
-pub const COLLAPSED_H: f64 = 52.0;
+/// Thin vertical edge bar (Cursor-style handle).
+pub const COLLAPSED_W: f64 = 10.0;
+pub const COLLAPSED_H: f64 = 72.0;
 pub const EXPANDED_W: f64 = 340.0;
 pub const EXPANDED_H: f64 = 460.0;
-pub const TOP_MARGIN: f64 = 12.0;
+pub const EDGE_INSET: f64 = 6.0;
 
 fn shelf_window(app: &AppHandle) -> Result<WebviewWindow, String> {
     app.get_webview_window("shelf")
         .ok_or_else(|| "shelf window missing".into())
 }
 
-/// Place the island at top-center of the monitor that currently owns the window.
-pub fn dock_top_center(win: &WebviewWindow, width: f64, height: f64) -> Result<(), String> {
+/// Dock the island to the right edge of the monitor, vertically centered.
+/// Expand/collapse grows inward from this edge (x stays right-aligned).
+pub fn dock_right_edge(win: &WebviewWindow, width: f64, height: f64) -> Result<(), String> {
     let monitor = win
         .current_monitor()
         .map_err(|e| e.to_string())?
@@ -24,11 +26,12 @@ pub fn dock_top_center(win: &WebviewWindow, width: f64, height: f64) -> Result<(
     let msize = monitor.size();
 
     let screen_w = msize.width as f64 / scale;
+    let screen_h = msize.height as f64 / scale;
     let origin_x = mpos.x as f64 / scale;
     let origin_y = mpos.y as f64 / scale;
 
-    let x = origin_x + ((screen_w - width) / 2.0).max(0.0);
-    let y = origin_y + TOP_MARGIN;
+    let x = origin_x + screen_w - width - EDGE_INSET;
+    let y = origin_y + ((screen_h - height) / 2.0).max(0.0);
 
     win.set_size(tauri::Size::Logical(LogicalSize::new(width, height)))
         .map_err(|e| e.to_string())?;
@@ -41,10 +44,10 @@ pub fn dock_top_center(win: &WebviewWindow, width: f64, height: f64) -> Result<(
 #[tauri::command]
 pub fn set_island_bounds(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
     let win = shelf_window(&app)?;
-    let w = width.clamp(120.0, EXPANDED_W + 40.0);
-    let h = height.clamp(44.0, EXPANDED_H + 40.0);
+    let w = width.clamp(8.0, EXPANDED_W + 40.0);
+    let h = height.clamp(40.0, EXPANDED_H + 40.0);
     let _ = win.set_resizable(false);
-    dock_top_center(&win, w, h)?;
+    dock_right_edge(&win, w, h)?;
     let _ = win.show();
     let _ = crate::window_ext::apply_shelf_window_styles(&win);
     Ok(())

@@ -79,8 +79,11 @@ pub fn apply_shelf_window_styles(window: &WebviewWindow) -> Result<(), String> {
         let w = client_rect.right - client_rect.left;
         let h = client_rect.bottom - client_rect.top;
         if w > 0 && h > 0 {
-            // Capsule when collapsed; ~22px logical radius when expanded.
-            let ellipse = if h <= 80 {
+            // Vertical edge bar → capsule on width; short horizontal → capsule on height;
+            // expanded panel → soft ~22px logical radius.
+            let ellipse = if w <= h && w <= 24 {
+                w
+            } else if h <= w && h <= 80 {
                 h
             } else {
                 (22.0 * window.scale_factor().unwrap_or(1.0)).round() as i32 * 2

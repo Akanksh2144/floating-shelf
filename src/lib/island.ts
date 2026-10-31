@@ -2,7 +2,7 @@ import { animate } from "motion/react";
 import { setIslandBounds } from "./tauri-api";
 
 export const ISLAND = {
-  collapsed: { w: 172, h: 52 },
+  collapsed: { w: 10, h: 72 },
   expanded: { w: 340, h: 460 },
 } as const;
 
@@ -13,7 +13,7 @@ const spring = {
   mass: 0.85,
 };
 
-/** Morph the native window between collapsed pill and expanded shelf. */
+/** Morph the native window between collapsed edge bar and expanded shelf. */
 export async function morphIslandWindow(
   expanded: boolean,
   from?: { w: number; h: number },

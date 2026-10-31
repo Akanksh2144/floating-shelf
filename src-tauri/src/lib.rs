@@ -191,7 +191,7 @@ pub fn run() {
 
             if let Some(win) = app.get_webview_window("shelf") {
                 let _ = apply_shelf_window_styles(&win);
-                let _ = island::dock_top_center(
+                let _ = island::dock_right_edge(
                     &win,
                     island::COLLAPSED_W,
                     island::COLLAPSED_H,
@@ -212,7 +212,7 @@ pub fn run() {
                 .transparent(false)
                 .build()?;
                 let _ = apply_shelf_window_styles(&win);
-                let _ = island::dock_top_center(
+                let _ = island::dock_right_edge(
                     &win,
                     island::COLLAPSED_W,
                     island::COLLAPSED_H,

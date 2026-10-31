@@ -4,7 +4,6 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AnimatePresence, motion } from "motion/react";
 import {
   X,
-  GripVertical,
   FileIcon,
   ImageIcon,
   FileText,
@@ -27,11 +26,6 @@ import { ISLAND, morphIslandWindow } from "../lib/island";
 const IDLE_MS = 10_000;
 
 const easeOut = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.8 };
-const fadeSwap = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-};
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -353,11 +347,28 @@ export default function ShelfWindow() {
   };
 
   const hasItems = Boolean(shelf && shelf.items.length > 0);
-  const pillLabel =
-    totals.count === 0
-      ? "Drop files"
-      : `${totals.count} file${totals.count === 1 ? "" : "s"}`;
   const expanded = mode === "expanded";
+
+  // Collapsed: thin vertical edge bar only (no labels — they won't fit).
+  if (!expanded) {
+    return (
+      <motion.button
+        type="button"
+        aria-label="Expand Modillion"
+        className={`h-full w-full cursor-pointer border border-black/10 outline-none ${
+          draggingOver ? "bg-blue-100" : "bg-white"
+        }`}
+        initial={false}
+        animate={{ backgroundColor: draggingOver ? "rgb(219 234 254)" : "rgb(255 255 255)" }}
+        whileHover={{ backgroundColor: draggingOver ? "rgb(191 219 254)" : "rgb(248 250 252)" }}
+        whileTap={{ scaleY: 0.96 }}
+        transition={{ duration: 0.15 }}
+        onClick={() => void expand()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      />
+    );
+  }
 
   return (
     <div
@@ -366,206 +377,145 @@ export default function ShelfWindow() {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className={`flex min-h-[52px] shrink-0 cursor-pointer items-center gap-2.5 px-3.5 py-2 ${
-          draggingOver && !expanded ? "bg-blue-50" : "bg-white"
-        }`}
-        onClick={() => {
-          if (!expanded) void expand();
-        }}
-        onMouseDown={(e) => {
-          if (expanded && e.button === 0) void startWindowDrag();
-        }}
+        className="flex min-h-[52px] shrink-0 cursor-grab items-center gap-2.5 px-3.5 py-2 active:cursor-grabbing"
+        onMouseDown={() => void startWindowDrag()}
       >
-        <motion.span
-          layout
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold tracking-tight text-white"
-          whileTap={{ scale: 0.94 }}
-          transition={easeOut}
-        >
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold tracking-tight text-white">
           M
-        </motion.span>
+        </span>
 
         <div className="min-w-0 flex-1 overflow-visible">
-          <AnimatePresence mode="wait" initial={false}>
-            {expanded ? (
-              <motion.div
-                key="expanded-title"
-                {...fadeSwap}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col justify-center gap-0.5"
-              >
-                <div className="truncate leading-5 text-[14px] font-semibold tracking-tight text-slate-900">
-                  Modillion
-                </div>
-                <div className="truncate leading-4 text-[11px] text-slate-500">
-                  {totals.count === 0
-                    ? "Drop files in. Originals stay put."
-                    : `${totals.count} file${totals.count === 1 ? "" : "s"} · ${formatBytes(totals.bytes)} · drag out to copy`}
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="pill-title"
-                {...fadeSwap}
-                transition={{ duration: 0.15 }}
-                className="flex items-center"
-              >
-                <span className="truncate leading-5 text-[13px] font-semibold tracking-tight text-slate-900">
-                  {draggingOver ? "Release to copy" : pillLabel}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="flex flex-col justify-center gap-0.5">
+            <div className="truncate text-[14px] font-semibold leading-5 tracking-tight text-slate-900">
+              Modillion
+            </div>
+            <div className="truncate text-[11px] leading-4 text-slate-500">
+              {totals.count === 0
+                ? "Drop files in. Originals stay put."
+                : `${totals.count} file${totals.count === 1 ? "" : "s"} · ${formatBytes(totals.bytes)} · drag out to copy`}
+            </div>
+          </div>
         </div>
 
-        {expanded ? (
-          <motion.button
-            type="button"
-            aria-label="Collapse"
-            whileHover={{ scale: 1.06, backgroundColor: "rgb(241 245 249)" }}
-            whileTap={{ scale: 0.92 }}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-slate-800"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              void collapse();
-            }}
-          >
-            <ChevronUp size={14} />
-          </motion.button>
-        ) : (
-          <motion.span
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.94 }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              void startWindowDrag();
-            }}
-            onClick={(e) => e.stopPropagation()}
-            aria-hidden
-          >
-            <GripVertical size={14} />
-          </motion.span>
-        )}
+        <motion.button
+          type="button"
+          aria-label="Collapse"
+          whileHover={{ scale: 1.06, backgroundColor: "rgb(241 245 249)" }}
+          whileTap={{ scale: 0.92 }}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:text-slate-800"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            void collapse();
+          }}
+        >
+          <ChevronUp size={14} />
+        </motion.button>
       </div>
 
-      <AnimatePresence initial={false}>
-        {expanded && (
+      <motion.div
+        key="body"
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={easeOut}
+        className={`flex min-h-0 flex-1 flex-col px-3 pb-3 ${
+          draggingOver ? "ring-2 ring-inset ring-blue-500" : ""
+        }`}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          dragDepth.current += 1;
+          setDraggingOver(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          dragDepth.current -= 1;
+          if (dragDepth.current <= 0) {
+            dragDepth.current = 0;
+            setDraggingOver(false);
+          }
+        }}
+        onDragOver={(e) => e.preventDefault()}
+      >
+        {hasItems && shelf ? (
+          <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
+            <motion.div layout className="grid grid-cols-2 gap-x-2.5 gap-y-3">
+              <AnimatePresence mode="popLayout">
+                {shelf.items.map((item, index) => (
+                  <ItemTile
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onRemove={() => {
+                      void (async () => {
+                        const updated = await removeItem(shelf.id, item.id);
+                        setShelf(updated);
+                      })();
+                    }}
+                    onDragStart={() => {
+                      if (item.status !== "ready") return;
+                      setOutboundDragging(true);
+                      void startOutboundDrag(shelf.id, [item.id]).finally(() => {
+                        setOutboundDragging(false);
+                      });
+                    }}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        ) : (
           <motion.div
-            key="body"
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            layout
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={easeOut}
-            className={`flex min-h-0 flex-1 flex-col px-3 pb-3 ${
-              draggingOver ? "ring-2 ring-inset ring-blue-500" : ""
+            className={`flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center ${
+              draggingOver
+                ? "border-blue-500 bg-blue-50"
+                : "border-[var(--shelf-dash)] bg-[var(--shelf-inset)]"
             }`}
-            onDragEnter={(e) => {
-              e.preventDefault();
-              dragDepth.current += 1;
-              setDraggingOver(true);
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              dragDepth.current -= 1;
-              if (dragDepth.current <= 0) {
-                dragDepth.current = 0;
-                setDraggingOver(false);
-              }
-            }}
-            onDragOver={(e) => e.preventDefault()}
           >
-            {hasItems && shelf ? (
-              <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
-                <motion.div
-                  layout
-                  className="grid grid-cols-2 gap-x-2.5 gap-y-3"
-                >
-                  <AnimatePresence mode="popLayout">
-                    {shelf.items.map((item, index) => (
-                      <ItemTile
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        onRemove={() => {
-                          void (async () => {
-                            const updated = await removeItem(shelf.id, item.id);
-                            setShelf(updated);
-                          })();
-                        }}
-                        onDragStart={() => {
-                          if (item.status !== "ready") return;
-                          setOutboundDragging(true);
-                          void startOutboundDrag(shelf.id, [item.id]).finally(() => {
-                            setOutboundDragging(false);
-                          });
-                        }}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
-              </div>
-            ) : (
-              <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={easeOut}
-                className={`flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center ${
-                  draggingOver
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-[var(--shelf-dash)] bg-[var(--shelf-inset)]"
-                }`}
-              >
-                <motion.div
-                  className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
-                  animate={
-                    draggingOver
-                      ? { scale: 1.06, y: -2 }
-                      : { scale: 1, y: 0 }
-                  }
-                  transition={easeOut}
-                >
-                  <ImageIcon size={20} className="text-blue-600" />
-                </motion.div>
-                <div className="text-[13px] font-semibold text-slate-900">
-                  {draggingOver ? "Release to copy in" : "Drop files here"}
-                </div>
-                <div className="mt-1 max-w-[200px] text-[12px] leading-snug text-slate-500">
-                  The shelf keeps a copy. Your original file is not moved.
-                </div>
-              </motion.div>
-            )}
-
-            {hasItems && (
-              <motion.div
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className={`mt-3 flex shrink-0 items-center justify-center rounded-xl border border-dashed px-3 py-2 text-[12px] font-medium ${
-                  draggingOver
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-[var(--shelf-dash)] bg-[var(--shelf-inset)] text-slate-500"
-                }`}
-              >
-                {draggingOver ? "Release to copy in" : "Drop more files"}
-              </motion.div>
-            )}
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 rounded-lg bg-red-50 px-2 py-1.5 text-[11px] text-red-700"
-              >
-                {error}
-              </motion.div>
-            )}
+            <motion.div
+              className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm"
+              animate={draggingOver ? { scale: 1.06, y: -2 } : { scale: 1, y: 0 }}
+              transition={easeOut}
+            >
+              <ImageIcon size={20} className="text-blue-600" />
+            </motion.div>
+            <div className="text-[13px] font-semibold text-slate-900">
+              {draggingOver ? "Release to copy in" : "Drop files here"}
+            </div>
+            <div className="mt-1 max-w-[200px] text-[12px] leading-snug text-slate-500">
+              The shelf keeps a copy. Your original file is not moved.
+            </div>
           </motion.div>
         )}
-      </AnimatePresence>
+
+        {hasItems && (
+          <motion.div
+            layout
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={`mt-3 flex shrink-0 items-center justify-center rounded-xl border border-dashed px-3 py-2 text-[12px] font-medium ${
+              draggingOver
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-[var(--shelf-dash)] bg-[var(--shelf-inset)] text-slate-500"
+            }`}
+          >
+            {draggingOver ? "Release to copy in" : "Drop more files"}
+          </motion.div>
+        )}
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 rounded-lg bg-red-50 px-2 py-1.5 text-[11px] text-red-700"
+          >
+            {error}
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }
