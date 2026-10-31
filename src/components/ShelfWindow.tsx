@@ -21,7 +21,12 @@ import {
   onItemProgress,
   onIslandMode,
 } from "../lib/tauri-api";
-import { ISLAND, morphIslandWindow, snapIslandWindow } from "../lib/island";
+import {
+  ISLAND,
+  dockIslandCollapsed,
+  morphIslandWindow,
+  snapIslandWindow,
+} from "../lib/island";
 
 const IDLE_MS = 10_000;
 
@@ -233,7 +238,7 @@ export default function ShelfWindow() {
 
   useEffect(() => {
     void refresh();
-    void morphIslandWindow(false).then(() => {
+    void dockIslandCollapsed().then(() => {
       sizeRef.current = ISLAND.collapsed;
       setMode("collapsed");
     });
@@ -354,18 +359,41 @@ export default function ShelfWindow() {
   const hasItems = Boolean(shelf && shelf.items.length > 0);
   const expanded = mode === "expanded";
 
-  // Collapsed: thin vertical edge bar only (no labels — they won't fit).
+  // Collapsed: slim vertical bar — drag to move, click to expand.
   if (!expanded) {
     return (
       <button
         type="button"
-        aria-label="Expand Modillion"
-        className={`box-border h-full w-full cursor-pointer rounded-full border border-[var(--shelf-border)] outline-none ${
+        aria-label="Expand or move Modillion"
+        className={`box-border h-full w-full cursor-grab rounded-full border border-[var(--shelf-border)] outline-none active:cursor-grabbing ${
           draggingOver ? "bg-blue-100" : "bg-white"
         }`}
-        onClick={() => void expand()}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let moved = false;
+          const onMove = (ev: PointerEvent) => {
+            if (
+              !moved &&
+              (Math.abs(ev.clientX - startX) > 4 || Math.abs(ev.clientY - startY) > 4)
+            ) {
+              moved = true;
+              window.removeEventListener("pointermove", onMove);
+              window.removeEventListener("pointerup", onUp);
+              void startWindowDrag();
+            }
+          };
+          const onUp = () => {
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            if (!moved) void expand();
+          };
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+        }}
       />
     );
   }

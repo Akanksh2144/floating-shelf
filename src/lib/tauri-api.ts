@@ -33,8 +33,9 @@ export async function setIslandBounds(
   width: number,
   height: number,
   restyle = true,
+  dock = false,
 ): Promise<void> {
-  return invoke("set_island_bounds", { width, height, restyle });
+  return invoke("set_island_bounds", { width, height, restyle, dock });
 }
 
 export async function revealIsland(): Promise<void> {
