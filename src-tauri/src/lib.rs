@@ -7,7 +7,7 @@ mod staging;
 mod state;
 mod window_ext;
 
-use island::{reveal_island, set_island_expanded};
+use island::{reveal_island, set_island_bounds, set_island_expanded};
 use persist::{init_storage, restore_app_state, save_app_state};
 use staging::{persist_shelf_meta, stage_local_file};
 use state::{AppState, Shelf};
@@ -174,6 +174,7 @@ pub fn run() {
             remove_item,
             show_shelf_window,
             set_island_expanded,
+            set_island_bounds,
             reveal_island,
             outbound_drag::start_outbound_drag,
         ])

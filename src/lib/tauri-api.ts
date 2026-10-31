@@ -29,6 +29,10 @@ export async function setIslandExpanded(expanded: boolean): Promise<void> {
   return invoke("set_island_expanded", { expanded });
 }
 
+export async function setIslandBounds(width: number, height: number): Promise<void> {
+  return invoke("set_island_bounds", { width, height });
+}
+
 export async function revealIsland(): Promise<void> {
   return invoke("reveal_island");
 }

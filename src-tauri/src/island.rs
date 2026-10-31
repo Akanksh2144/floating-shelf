@@ -37,19 +37,27 @@ pub fn dock_top_center(win: &WebviewWindow, width: f64, height: f64) -> Result<(
     Ok(())
 }
 
+/// Resize/reposition the island (used for Motion-driven morph frames).
+#[tauri::command]
+pub fn set_island_bounds(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
+    let win = shelf_window(&app)?;
+    let w = width.clamp(120.0, EXPANDED_W + 40.0);
+    let h = height.clamp(44.0, EXPANDED_H + 40.0);
+    let _ = win.set_resizable(false);
+    dock_top_center(&win, w, h)?;
+    let _ = win.show();
+    let _ = crate::window_ext::apply_shelf_window_styles(&win);
+    Ok(())
+}
+
 #[tauri::command]
 pub fn set_island_expanded(app: AppHandle, expanded: bool) -> Result<(), String> {
-    let win = shelf_window(&app)?;
     let (w, h) = if expanded {
         (EXPANDED_W, EXPANDED_H)
     } else {
         (COLLAPSED_W, COLLAPSED_H)
     };
-
-    let _ = win.set_resizable(false);
-    dock_top_center(&win, w, h)?;
-    let _ = win.show();
-    let _ = crate::window_ext::apply_shelf_window_styles(&win);
+    set_island_bounds(app.clone(), w, h)?;
     let _ = app.emit("island:mode", if expanded { "expanded" } else { "collapsed" });
     Ok(())
 }
