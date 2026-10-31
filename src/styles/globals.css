@@ -20,6 +20,8 @@ body,
   height: 100%;
   background: transparent;
   overflow: hidden;
+  border: none;
+  outline: none;
   font-family:
     "Segoe UI Variable",
     "Segoe UI",

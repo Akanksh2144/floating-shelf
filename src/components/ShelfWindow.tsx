@@ -340,10 +340,10 @@ export default function ShelfWindow() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -4 }}
             transition={{ type: "spring", stiffness: 520, damping: 34 }}
-            className={`flex h-full w-full cursor-pointer items-center gap-2.5 rounded-full border px-3.5 shadow-[0_8px_28px_rgba(15,23,42,0.18)] outline-none ${
+            className={`flex h-full w-full cursor-pointer items-center gap-2.5 rounded-full border px-3.5 outline-none ${
               draggingOver
                 ? "border-blue-500 bg-blue-50"
-                : "border-black/8 bg-white/95"
+                : "border-black/10 bg-white"
             }`}
             onClick={() => void expand()}
             onMouseDown={(e) => {
